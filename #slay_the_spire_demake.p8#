@@ -23,13 +23,6 @@ function print_selected(_str, _x, _y, _c, _selected)
    print((_selected and "X" or "") .. _str, _x, _y, (_selected and enum_game_colors.player_color) or _c)
 end
 
-function str_scrolling(_str, _max_length, _frame, _x, _y, _c)
-  local pointer_start = rotate(flr(_frame/10), 1, #_str)
-  local pointer_end = clamp(pointer_start + _max_length, #_str)
-   
-  return sub(_str, lerp(percent, 1, #_str), lerp(percent, _length, #_str))
-end
-
 function lerp(_percent, _min, _max)
    return _percent*(_max-_min)+_min
 end
