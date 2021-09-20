@@ -70,7 +70,8 @@ enum_actions = {
     toggle_speed_mode = 27,
     display_event = 28,
     spend_energy = 29,
-    attack_all_enemies = 30
+    attack_all_enemies = 30,
+    enemy_turn_start = 31
 }
 
 function_map_actions = {}
@@ -162,7 +163,7 @@ function_map_actions[enum_actions.combat_start] = function (_frame, _args)
                enemy_panel(_enemy, _x-19, _y, _i)
              end,
 			    display_side_left = function (_enemy, _y, _i)
-               if (_i == enemies.cursor-1) then
+               if (_i == 1) then
                   enemy_panel(_enemy, 0, _y, _i)
                end
              end,
@@ -187,12 +188,11 @@ function_map_actions[enum_actions.player_turn_start] = function (_frame, _args)
 end
 
 function_map_actions[enum_actions.player_turn_end] = function (_frame, _args)
-   for enemy in all(enemies) do
-      enemy.block = 0
+   if _frame == 10 then
+      add_to_action_queue(enum_actions.full_hand_to_discard)
+      add_to_action_queue(enum_actions.enemies_turn_start)
+      return true
    end
-   add_to_action_queue(enum_actions.full_hand_to_discard)
-   add_to_action_queue(enum_actions.enemies_turn_start)
-   return true
 end
 
 -- 5.2.1.2 card control
@@ -289,11 +289,7 @@ function_map_actions[enum_actions.player_turn_main] = function (_frame, _args)
       dec_cursor(combat_select)
    end
 
-   if get_selected(combat_select) == enemies then
-      set_cursor_to_element(field_view, hand)
-   else
-      set_cursor_to_element(field_view, get_selected(combat_select))
-   end
+   set_cursor_to_element(field_view, get_selected(combat_select))
    
    if btnp(enum_buttons.x) then
       set_cursor_to_element(field_view, hand)
@@ -416,25 +412,31 @@ function_map_actions[enum_actions.block] = function (_frame, _args)
 end
 
 -- 5.2.1.5 enemies actions
+function_map_actions[enum_actions.enemy_turn_start] = function (_frame, _args)
+   _args.block = 0
+   return true
+end
+
 function_map_actions[enum_actions.enemies_turn_start] = function (_frame, _args)
    turn = enum_turns.enemies   
    if _frame == 45 then
       set_cursor_to_element(combat_select, enemies)
-      for i=1, #enemies.list do
-         add_to_action_queue(enum_actions.enemy_action, i)
+      for enemy in all(enemies.list) do
+         --add_to_action_queue(enum_actions.enemy_turn_start, enemy)
+      end      
+      for enemy in all(enemies.list) do
+         add_to_action_queue(enum_actions.enemy_action, enemy)
       end
       add_to_action_queue(enum_actions.enemies_turn_end)
       return true
    end
 end
 
+
 -- expects 
 function_map_actions[enum_actions.enemy_action] = function (_frame, _args)
-   if _frame == 0 then
-      enemies.cursor = _args
-   end
    if _frame == 15 then
-      local enemy = enemies.list[_args]
+      local enemy = _args
       local intent = enemy.get_intent(enemy)
       enemy.block += intent.block or 0
       enemy.mods.strength += intent.strength or 0

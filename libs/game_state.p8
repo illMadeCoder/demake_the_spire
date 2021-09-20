@@ -28,7 +28,7 @@ exhaust = new_list_cursor()
 enemies = new_list_cursor()
 -- meta list and cursors
 combat_select = new_list_cursor({relics, potions, exhaust, discard, draw, hand, enemies})
-field_view = new_list_cursor({relics, potions, exhaust, discard, draw, hand})
+field_view = new_list_cursor({relics, enemies, potions, exhaust, discard, draw, hand})
 
 -- 3.2 game_state state accessors
 -- hand accessors

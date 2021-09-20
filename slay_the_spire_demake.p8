@@ -35,10 +35,7 @@ card_images = false
 function _init()
    frame = 0
 
-   enemies.list = enemy_ids_to_enemies({enum_enemies.jaw_worm,
-                                        enum_enemies.jaw_worm,
-                                        enum_enemies.jaw_worm,
-                                        enum_enemies.jaw_worm})
+   enemies.list = enemy_ids_to_enemies({enum_enemies.jaw_worm})
 
    deck.list = card_ids_to_pile({
       -- enum_cards.strike,

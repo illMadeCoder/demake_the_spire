@@ -4,16 +4,14 @@ __lua__
 
 -- 7 display
 function enemy_panel(_enemy, _x, _y, _i)
-   local c = display_colors.enemy_color
-
-   local enemy_dead_col = is_action_queue_currently(enum_actions.kill_enemy) and enum_colors.dark_blue or nil
+   local c = is_action_queue_currently(enum_actions.kill_enemy) and is_selected(enemies, _enemy) and enum_colors.dark_blue or nil
 
    panel(_x-2, _y-2, 42, 25, is_selected(combat_select, enemies) and is_selected(enemies, _enemy) and enum_colors.pink)
-   _print(_enemy.name, _x, _y+6, enemy_dead_col or c)
-   _print(_enemy.index, _x+36, _y, 5)
-   print_health_block(_enemy.health, _enemy.max_health, _enemy.block, _x, _y+12)
-   _print(get_enemy_intent_str(_enemy), _x, _y, enemy_dead_col or display_colors.intent_color)
-   _print(mods_str(_enemy.mods), _x, _y+18, enemy_dead_col or display_colors.mods_color)
+   _print(_enemy.name, _x, _y+6, c or display_colors.enemy_color)
+   _print(_enemy.index, _x+36, _y, c or 5)
+   print_health_block(_enemy.health, _enemy.max_health, _enemy.block, _x, _y+12, c)
+   _print(get_enemy_intent_str(_enemy), _x, _y, c or display_colors.intent_color)
+   _print(mods_str(_enemy.mods), _x, _y+18, c or display_colors.mods_color)
 end
 
 function get_enemy_intent_str(_enemy)
@@ -61,19 +59,21 @@ function get_card_color(_card)
       display_colors.card_color
 end
 
-function get_field_text()
+function get_field_text_and_c()
    local selected_field_view = get_selected(field_view)
-   return is_action_queue_currently(enum_actions.display_event) and "combat"
-      or selected_field_view == hand and "hand"
-      or selected_field_view == draw and "draw"
-      or selected_field_view == discard and "discard"
-      or selected_field_view == relics and "relics"
-      or selected_field_view == potions and "potions"
-      or selected_field_view == exhaust and "exhaust"
-      or ""
+   return is_action_queue_currently(enum_actions.display_event) and {"combat", 14}
+      or selected_field_view == hand and {"hand", 14}
+      or selected_field_view == enemies and {"enemies", 2}
+      or selected_field_view == player and {"player", 14}
+      or selected_field_view == draw and {"draw", 9}
+      or selected_field_view == discard and {"discard", 4}
+      or selected_field_view == relics and {"relics", 3}
+      or selected_field_view == potions and {"potions", 13}
+      or selected_field_view == exhaust and {"exhaust", 2}
+      or {"", 0}
 end
 
-function get_field_c()
+ function get_field_c() -- remove
    local selected_field_view = get_selected(field_view)
    return is_action_queue_currently(enum_actions.display_event) and enum_colors.blue
       or selected_field_view == hand and
@@ -137,22 +137,19 @@ graphic_typeobjects[enum_graphics.background] = {
 
 graphic_typeobjects[enum_graphics.field] = {
    callback = function (_state)      
-      local c, str = get_field_c()
-      local _str = get_field_text()
+      local o = get_field_text_and_c()
+      local _str, c = o[1], o[2]
       local _y = 31
       local _x = 63 - #_str*2
       local open_anim_offset_width = 63
       
       if _state.field_text != _str then
-      _state.field_text = _str
-      _state.frame = 0
+         _state.field_text = _str
+         _state.frame = 0
       end
 
       -- background
-      rectfill(0,
-	       _y-2,
-	       127,
-	       _y+63, enum_colors.black)
+      rectfill(0, _y-2, 127, _y+63, enum_colors.black)
       -- left
       rectfill(61 - open_anim_offset_width - #_str*2, _y -2, _x-2, _y+6, c)
       -- right
@@ -187,18 +184,18 @@ graphic_typeobjects[enum_graphics.field] = {
       end
       
       if _state.frame >= 18 then
-	 if _str != "combat" then
-	    draw_graphic(_state.focus_sides)
-	 else
-	    print_centered("place holder for combat text", 63, _y+28, c) -- remove
-	 end   
+      if _str == "enemies" then
+         draw_graphic(_state.focus_sides_enemies)
+      else
+         draw_graphic(_state.focus_sides_cards)
+      end   
       end
    end,
    state = function (_args)
       -- expects
       return {
 	 anim_state = 1,
-	 focus_sides = new_graphic(enum_graphics.focus_sides,
+	 focus_sides_cards = new_graphic(enum_graphics.focus_sides,
 				   {
 				   get_list_cursor = function ()
 					 return get_selected(field_view)
@@ -241,7 +238,26 @@ graphic_typeobjects[enum_graphics.field] = {
                            get_card_color(_card))
 				      end
 				   }
-	 )
+	 ),
+	 focus_sides_enemies = new_graphic(enum_graphics.focus_sides,
+				   {
+				   get_list_cursor = function ()
+					 return get_selected(field_view)
+				   end,
+				   y = 41,
+				   display_focus = function (_enemy,_x,_y)
+                  -- border
+                  rectfill(_x-35, _y-2, _x+35, _y+45, enum_colors.black)
+                  rect(_x-30, _y-2, _x+30, _y+40, c)
+                  
+                  print_centered(_enemy.name, _x, _y, 2)
+				   end,
+               display_side_left = function (_enemy, _y, _i)
+				   end,
+               display_side_right = function (_enemy, _y, _i)
+				   end
+				   }
+	 )    
       }
    end
 }
@@ -249,17 +265,17 @@ graphic_typeobjects[enum_graphics.field] = {
 graphic_typeobjects[enum_graphics.combat_player_panel] = {
    callback = function (_combat_player_panel)
       local x, y = 8, 102
-            local c = (is_selected(combat_select, draw) or
-	       is_selected(combat_select, discard) or
-	       is_selected(combat_select, exhaust) or
-          is_selected(combat_select, potions) or
-          is_selected(combat_select, relics)) and enum_colors.pink
+      local c = (is_selected(combat_select, draw) or
+      is_selected(combat_select, discard) or
+      is_selected(combat_select, exhaust) or
+      is_selected(combat_select, potions) or
+      is_selected(combat_select, relics)) and enum_colors.pink
+
       panel(x-2, y-2, 42, 25, c)
       print_energy(x, y, player.energy)
       _print("ironclad", x, y+6, enum_colors.pink)
-      _print("\137", 41, y, enum_colors.pink)
       print_health_block(player.health.cur, player.health.max, player.block, x, y+12)
-      _print(filler_str(), x, y+18, enum_colors.purple)
+      _print(mods_str({}), x, y+18, enum_colors.purple)
 
       panel(53, 97, 72, 29,c)
 
@@ -309,7 +325,7 @@ graphic_typeobjects[enum_graphics.focus_sides] = {
 
       -- left side
       for i=1, list_cursor.cursor-1 do
-         _display_side_left(list_cursor.list[i], _y, i)
+         _display_side_left(list_cursor.list[list_cursor.cursor-i], _y, i)
       end
       
       -- right side

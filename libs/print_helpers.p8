@@ -129,17 +129,6 @@ function print_left_just(_str, _x, _y, _c, _is_selected, _underline)
    _print(_str, _x, _y, _c, _is_selected, _underline)
 end
 
-function print_health(_x, _y, _health_cur, _health_max)
-   local str = _health_cur .. "/" .. _health_max
-   _print(str, _x, _y, enum_colors.red)
-   _print(icons_map.health, _x+#str*4-1, _y, enum_colors.red)
-end
-
-function print_block(_x, _y, _block)
-   _print(_block, _x, _y, enum_colors.grey)
-   _print(icons_map.block, _x+#(_block .. "")*4-1, _y, enum_colors.grey)
-end
-
 function print_energy(_x, _y, _energy)
    _print(_energy, _x, _y, enum_colors.yellow)
    _print(icons_map.energy, _x+#(_energy .. "")*4-1, _y, enum_colors.yellow)
@@ -153,7 +142,7 @@ function mods_str(_mods)
          s = s .. v .. display_str_k
       end
    end
-   return fill_rest_str(s,"~",9)
+   return fill_rest_str(s,"~",10)
 end
 
 function repeat_char(_char, _c)
@@ -164,15 +153,24 @@ function repeat_char(_char, _c)
    return r
 end
 
-function fill_rest_str(_str, _char, _c)
-   return _str .. repeat_char(_char, 9-#_str)   
+function fill_rest_str(_str, _char, _count, _fill_left)
+   local repeated_chars = repeat_char(_char, _count-#_str)
+   return _fill_left and repeated_chars .. _str or _str .. repeated_chars 
 end
 
-function filler_str()
-   return repeat_char("~", 9)
+function print_health(_x, _y, _health_cur, _health_max)
+   local str = _health_cur .. "/" .. _health_max
+   _print(str, _x, _y, enum_colors.red)
+   _print(icons_map.health, _x+#str*4-1, _y, enum_colors.red)
 end
 
-function print_health_block(_health_cur, _health_max, _block, _x, _y)
-   print_health(_x, _y, _health_cur, _health_max, enum_colors.red)
-   print_block(_x+27, _y, _block, enum_colors.grey)   
+function print_block(_x, _y, _block)
+   _block = fill_rest_str(tostr(_block), '0', 2, true)
+   _print(_block, _x, _y, enum_colors.grey)
+   _print(icons_map.block, _x+#(_block .. "")*4-1, _y, enum_colors.grey)
+end
+
+function print_health_block(_health_cur, _health_max, _block, _x, _y, _c)
+   print_health(_x, _y, _health_cur, _health_max, _c or enum_colors.red)
+   print_block(_x+27, _y, _block, _c or enum_colors.grey)   
 end
