@@ -16,7 +16,7 @@ end
 function draw_graphic_buffer()
    for graphic in all(graphic_buffer) do
       if draw_graphic(graphic) then
-	 del(graphic_buffer, graphic)
+	      del(graphic_buffer, graphic)
       end
    end
 end
@@ -25,8 +25,4 @@ function add_to_graphic_buffer(_graphic_id, _args)
    local graphic = new_graphic(_graphic_id, _args)
    add(graphic_buffer, graphic)
    return graphic
-end
-
-function add_graphic_to_graphic_buffer(_graphic_id, _args)
-   add(graphic_buffer, new_graphic(_graphic_id, _args))
 end

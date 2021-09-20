@@ -52,11 +52,6 @@ function add_to_action_queue(_action_id, _args)
    log_action_queue("add", _action_id)--debug
 end
 
-function add_intent_to_action_queue(_intent, _args)
-   add(action_queue, _intent.action)
-   --log_action_queue("add intent", _intent.name)--debug
-end
-
 function is_action_queue_currently(_action_id)
    assert(is_in_enum(_action_id, enum_actions), _action_id) --debug
    return action_queue[1] and action_queue[1].action_id == _action_id

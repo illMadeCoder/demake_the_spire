@@ -23,17 +23,21 @@ enum_cards = {
    defend = 2,
    anger = 3,
    bash = 4,
-   clotheseline = 5
+   reaper = 5
 }
 
-function dmg_str(_card) 
-   return "deal " .. (     _card.base.select_enemy and
+function damage_str(_card) 
+   return "deal " .. (_card.card_prototype.select_enemy and
                            enemies and 
                            get_selected(enemies) 
                            and 
                            get_selected(enemies).mods.v > 0 
-                              and _card.base.dmg + flr(_card.base.dmg*.5) 
-                              or _card.base.dmg) .. " damage"
+                              and _card.card_prototype.damage + flr(_card.card_prototype.damage*.5) 
+                              or _card.card_prototype.damage) .. icons_map.damage
+end
+
+function block_str(_card) 
+   return "gain " .. _card.card_prototype.block .. icons_map.block
 end
 
 card_typeobjects = {
@@ -42,101 +46,109 @@ card_typeobjects = {
       enum_card_types.attack, -- 2 type
       1, -- 3 cost      
       function (_this) -- 4 invoke_action	      
-	      add_to_action_queue(enum_actions.attack_enemy, _this.base.dmg)
+	      add_to_action_queue(enum_actions.attack_enemy, 
+                           {damage=_this.card_prototype.damage})
       end,
       function (_this) -- 5 get_description
-	      return dmg_str(_this)
+	      return damage_str(_this)
       end,
       select_enemy = true,
-      dmg = 6
+      damage = 6
    },
    {
       "defend",
       enum_card_types.skill,
       1,
       function (_this)
-	      add_to_action_queue(enum_actions.block, _this.base.block)
+	      add_to_action_queue(enum_actions.block, _this.card_prototype.block)
       end,
       function (_this)
-	      return "get " .. _this.base.block .. " block"
+	      return block_str(_this)
       end,
       block = 5
    },
    {
       "anger",
       enum_card_types.attack,
-      6,
       0,
       function (_this)
-         add_to_action_queue(enum_actions.attack_enemy, _this.base_damage)
+         add_to_action_queue(enum_actions.attack_enemy, {damage=_this.card_prototype.damage})
+         add_to_action_queue(enum_actions.add_to_discard_pile, new_card(enum_cards.anger))         
       end,
       function (_this)
-	 return ""
+	      return {damage_str(_this), " adds a copy of this card into your discard pile"}
       end,
-      true
+      select_enemy = true,
+      damage = 6
    },
    {
       "bash",
       enum_card_types.attack,
       2,
       function (_this)
-         add_to_action_queue(enum_actions.attack_enemy, _this.base.dmg)
-         add_to_action_queue(enum_actions.apply_selected, _this.base.mods)
+         add_to_action_queue(enum_actions.attack_enemy, {damage=_this.card_prototype.damage})
+         add_to_action_queue(enum_actions.apply_selected, _this.card_prototype.mods)
       end,
       function (_this)
-	      return dmg_str(_this)
+	      return damage_str(_this)
       end,
       select_enemy = true,
-      dmg = 8,
+      damage = 8,
       mods = {v=2}
    },
    {
-      "clothesline",
-      enum_card_types.attack,
-      12,
-      2,
-      function (_this)
-         add_to_action_queue(enum_actions.attack_enemy, _this.base_damage)
-         add_to_action_queue(enum_actions.apply_selected, {w=2})
-      end,
-      function (_this)
-	 return ""
-      end,
-      true
-   }
+   "reaper",
+   enum_card_types.attack,
+   2,
+   function (_this)         
+      for enemy in all(enemies.list) do
+         add_to_action_queue(enum_actions.attack_enemy, {enemy=enemy, damage=_this.card_prototype.damage})
+      end
+   end,
+   function (_this)
+      return (damage_str(_this) .. " to all enemies. heal hp equal to unblocked damage.")
+   end,      
+   damage = 4
+}
 }
 
 -- 4.2 card constructor
+latest_card_instance_id = 0
 function new_card(_card_id)
    assert(card_typeobjects[_card_id]) --debug
-   return {
-      base = card_typeobjects[_card_id]
+   
+   local card_instance =  {
+      card_instance_id = latest_card_instance_id,
+      card_prototype = card_typeobjects[_card_id]
    }
+   latest_card_instance_id += 1
+
+   return card_instance
 end
 
 -- 4.2 general card methods
 function get_card_name(_card)
-   return _card.base[1]
+   return _card.card_prototype[1]
 end
 
 function get_card_type(_card)
-   return _card.base[2]
+   return _card.card_prototype[2]
 end
 
 function get_card_cost(_card)   
-   return _card.base[3]
+   return _card.card_prototype[3]
 end
 
 function invoke_card(_card)
-   return _card.base[4](_card)
+   return _card.card_prototype[4](_card)
 end
 
 function get_card_description(_card)
-   return _card.base[5](_card)
+   return _card.card_prototype[5](_card)
 end
 
 function get_card_select_enemy(_card) 
-   return _card.base.select_enemy
+   return _card.card_prototype.select_enemy
 end 
 
 -- expects a list of strings of card names, returns a list of cards

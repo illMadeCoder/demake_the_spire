@@ -12,6 +12,7 @@ player = {
    },
    energy_init = 3,
    energy = 3,
+   draw_power = 5,
    block = 0,
    mods = {}
 }
@@ -41,6 +42,11 @@ end
 
 function get_selected_card_from_hand()
    return get_selected(hand)
+end
+
+selected_card = nil
+function get_selected_card()
+   return selected_card
 end
 
 function can_play_card(_card)
@@ -118,7 +124,6 @@ function get_exhaust()
    return exhaust.list
 end
 
-
 -- enemy accessors
 function reset_enemies_cursor()
    set_cursor_mid(enemies)
@@ -127,10 +132,9 @@ end
 function reset_all_cursors()
    reset_hand_cursor()
    reset_draw_cursor()
-   reset_discard_cursor()
-   reset_enemies_cursor()
+   reset_discard_cursor() 
    set_cursor_to_element(combat_select, hand)
-   set_cursor_to_element(field_view, hand)
+   set_cursor_to_element(field_view, hand)   
 end
 
 function get_potions()

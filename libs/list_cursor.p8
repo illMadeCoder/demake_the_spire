@@ -25,8 +25,8 @@ end
 function set_cursor_to_element(_list_cursor, _element)
    for k,element in pairs(_list_cursor.list) do
       if element == _element then
-	 _list_cursor.cursor = k
-	 return
+         _list_cursor.cursor = k
+         return
       end
    end
 end

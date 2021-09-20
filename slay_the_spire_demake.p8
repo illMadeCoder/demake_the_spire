@@ -30,29 +30,30 @@ __lua__
 debug_mode = true -- debug
 rnd_seed = rnd(100)
 card_images = false
-speed_mode = true
-menuitem(1, "speed mode",
-	 function ()
-	    immediate_add_action_queue(enum_actions.toggle_speed_mode)
-	 end
-)
 
 -- 8. pico-8 hooks
 function _init()
    frame = 0
 
-   enemies.list = enemy_ids_to_enemies({enum_enemies.jaw_worm})
+   enemies.list = enemy_ids_to_enemies({enum_enemies.jaw_worm,
+                                        enum_enemies.jaw_worm,
+                                        enum_enemies.jaw_worm,
+                                        enum_enemies.jaw_worm})
 
-   deck.list = card_ids_to_pile({enum_cards.strike,
-   					  enum_cards.strike,
-   					  enum_cards.strike,
-   					  enum_cards.strike,
-   					  enum_cards.strike,
+   deck.list = card_ids_to_pile({
+      -- enum_cards.strike,
+   					   enum_cards.strike,
+   					   enum_cards.strike,
+   					   enum_cards.strike,
+   					   enum_cards.strike,
+                    enum_cards.anger,
+                    enum_cards.reaper,
    					  enum_cards.bash,
    					  enum_cards.defend,
    					  enum_cards.defend,
-   					  enum_cards.defend,
-					  enum_cards.defend})
+   					  enum_cards.defend
+					--   enum_cards.defend
+                 })
 
    add_to_action_queue(enum_actions.combat_start)
 end

@@ -69,7 +69,8 @@ enum_actions = {
     delay = 26,
     toggle_speed_mode = 27,
     display_event = 28,
-    spend_energy = 29
+    spend_energy = 29,
+    attack_all_enemies = 30
 }
 
 function_map_actions = {}
@@ -157,8 +158,19 @@ function_map_actions[enum_actions.combat_start] = function (_frame, _args)
 			       return enemies
 			    end,
 			    y = 3,
-			    display_focus = display_focus_enemy,
-			    display_side = display_side_enemy
+			    display_focus = function (_enemy, _x, _y) 
+               enemy_panel(_enemy, _x-19, _y, _i)
+             end,
+			    display_side_left = function (_enemy, _y, _i)
+               if (_i == enemies.cursor-1) then
+                  enemy_panel(_enemy, 0, _y, _i)
+               end
+             end,
+			    display_side_right = function (_enemy, _y, _i)
+               if (_i == 1) then
+                  enemy_panel(_enemy, 88, _y, _i)
+               end
+             end,
 			 }
    )
   
@@ -169,12 +181,15 @@ end
 function_map_actions[enum_actions.player_turn_start] = function (_frame, _args)
    set_cursor_to_element(field_view, hand)
    turn = enum_turns.player
-   player.energy = player.energy_init
-    add_to_action_queue(enum_actions.full_draw_to_hand)
+   player.energy = player.energy_init   
+   add_to_action_queue(enum_actions.full_draw_to_hand)
    return true
 end
 
 function_map_actions[enum_actions.player_turn_end] = function (_frame, _args)
+   for enemy in all(enemies) do
+      enemy.block = 0
+   end
    add_to_action_queue(enum_actions.full_hand_to_discard)
    add_to_action_queue(enum_actions.enemies_turn_start)
    return true
@@ -191,30 +206,26 @@ function_map_actions[enum_actions.full_hand_to_discard] = function (_frame, _arg
 end
 -- draw to hand
 function_map_actions[enum_actions.full_draw_to_hand] = function (_frame, _args)
-   for i=1, 10 do
+   for i=1, player.draw_power do
       add_to_action_queue(enum_actions.single_draw_to_hand)
-   end
-   add_to_action_queue(enum_actions.delay, 6)
+   end   
    add_to_action_queue(enum_actions.player_turn_main)
    return true
 end
 
-function_map_actions[enum_actions.single_draw_to_hand] = function (_frame, _args)
-   local draw_speed = speed_mode and 5 or 10
-   if is_draw_empty() and not is_discard_empty() then
-      interrupt_action_queue(enum_actions.full_discard_to_draw)
-   elseif _frame == draw_speed then
-      return true
-   elseif not is_draw_empty() and _frame == flr(draw_speed/2) then
+function_map_actions[enum_actions.single_draw_to_hand] = function (_frame, _args)   
+   if _frame == 1 and is_draw_empty() and not is_discard_empty() then
+      interrupt_action_queue(enum_actions.full_discard_to_draw)   
+   end
+
+   if _frame == 2 and not is_draw_empty() then
       pop_draw_to_hand()
       set_hand_cursor_to_end()
    end
-end
 
-
-function_map_actions[enum_actions.toggle_speed_mode] = function (_frame, _args)
-   speed_mode = not speed_mode
-   return true
+   if _frame == 10 then
+      return true
+   end
 end
 
 -- discard to draw
@@ -240,12 +251,17 @@ end
 
 -- field control   
 function_map_actions[enum_actions.player_turn_main] = function (_frame, _args)
-   if _frame == 0 then      
-      reset_all_cursors()
-   end     
+   if _frame == 0  then
+      if not _args then      
+         reset_all_cursors()
+      else
+         set_cursor_to_element(combat_select, hand)
+         set_cursor_to_element(field_view, hand)    
+      end
+   end
    
    if get_selected(combat_select) == hand then
-      local selected_card = get_selected_card_from_hand()
+      selected_card = get_selected_card_from_hand()
       if selected_card
 	      and can_play_card(selected_card)
 	      and btnp(enum_buttons.z)
@@ -256,6 +272,8 @@ function_map_actions[enum_actions.player_turn_main] = function (_frame, _args)
             add_to_action_queue(enum_actions.invoke_card, selected_card)
          end         
 	      return true
+      else
+         selected_card = nil
       end
    end
    
@@ -295,14 +313,13 @@ function_map_actions[enum_actions.select_from_enemies] = function (_frame, _args
    end
 
    if btnp(enum_buttons.z) then
-      set_cursor_none(combat_select)
       add_to_action_queue(enum_actions.invoke_card, _args)
       return true
    end
 
-   if btnp(enum_buttons.x) then
+   if btnp(enum_buttons.x) then  
       set_cursor_none(combat_select)      
-      add_to_action_queue(enum_actions.player_turn_main)
+      add_to_action_queue(enum_actions.player_turn_main, true)
       return true
    end
 end
@@ -322,7 +339,7 @@ function_map_actions[enum_actions.invoke_card] = function (_frame, _args)
 end
 
 function_map_actions[enum_actions.discard_card] = function (_frame, _args)      
-   if _frame == (speed_mode and 5 or 10) then
+   if _frame == 8 then
       del(get_hand(), _args)
       add(get_discard(), _args)
       reset_hand_cursor()
@@ -336,26 +353,36 @@ function_map_actions[enum_actions.add_to_discard_pile] = function (_frame, _args
 end
 
 -- 5.2.1.4 player combat
+-- args 
+-- damage
+-- enemy
 function_map_actions[enum_actions.attack_enemy] = function (_frame, _args)
-   -- _args is damage :: int 
-   local enemy = get_selected(enemies)
-   if enemy then
-      --interrupt_action_queue(enum_actions.display_event)
-      if enemy.mods.v and enemy.mods.v > 0 then
-         _args = _args + flr(_args*.5)
-      end
-      local damage, block = damage_block_calc(_args, enemy.block)
-      
-      enemy.health -= damage
-      enemy.health = clamp(enemy.health, 0, 999)
-      enemy.block = block
-      
-      if enemy.health == 0 then
-         immediate_add_action_queue(enum_actions.kill_enemy, enemy)
-      end
+   local enemy = _args.enemy or get_selected(enemies)
+   set_cursor_to_element(combat_select, enemies)
+   set_cursor_to_element(enemies, enemy)
+   if _frame == 10 then
+      -- _args is damage :: int       
+      local base_damage = _args.damage
+      local mod_damage = base_damage
+      if enemy then
+         --interrupt_action_queue(enum_actions.display_event)
+         if enemy.mods.v > 0 then
+            mod_damage = base_damage + flr(base_damage*.5)
+         end
+         local damage, block = damage_block_calc(mod_damage, enemy.block)
+         
+         enemy.health -= damage
+         enemy.health = clamp(enemy.health, 0, 999)
+         enemy.block = block
+         
+         if enemy.health == 0 then
+            immediate_add_action_queue(enum_actions.kill_enemy, enemy)
+         end
+      end         
    end
-
-   return true
+   if _frame == 20 then
+      return true
+   end
 end
 
 function_map_actions[enum_actions.kill_enemy] = function (_frame, _args)
@@ -390,27 +417,28 @@ end
 
 -- 5.2.1.5 enemies actions
 function_map_actions[enum_actions.enemies_turn_start] = function (_frame, _args)
-   turn = enum_turns.enemies
+   turn = enum_turns.enemies   
    if _frame == 45 then
-      add_to_action_queue(enum_actions.enemies_actions)
+      set_cursor_to_element(combat_select, enemies)
+      for i=1, #enemies.list do
+         add_to_action_queue(enum_actions.enemy_action, i)
+      end
+      add_to_action_queue(enum_actions.enemies_turn_end)
       return true
    end
 end
 
-function_map_actions[enum_actions.enemies_actions] = function (_frame, _args)
-   for i=1, #enemies.list do
-      add_to_action_queue(enum_actions.enemy_action, i)
-   end
-   add_to_action_queue(enum_actions.enemies_turn_end)
-   return true
-end
-
+-- expects 
 function_map_actions[enum_actions.enemy_action] = function (_frame, _args)
    if _frame == 0 then
       enemies.cursor = _args
    end
    if _frame == 15 then
-      add_intent_to_action_queue(get_selected(enemies):get_intent())
+      local enemy = enemies.list[_args]
+      local intent = enemy.get_intent(enemy)
+      enemy.block += intent.block or 0
+      enemy.mods.strength += intent.strength or 0
+      player.health.cur -= intent.damage and (intent.damage + enemy.mods.strength) or 0            
    end
    if _frame == 30 then
       return true
@@ -419,28 +447,16 @@ end
 
 function_map_actions[enum_actions.enemies_turn_end] = function (_frame, _args)
    set_cursor_none(combat_select)
-   for enemy in all(enemies.list) do
+   reset_enemies_cursor()  
+   for enemy in all(enemies.list) do      
+      enemy.turn += 1     
       enemy.intent = nil
-      enemy.turn += 1
+      enemy.get_intent(enemy)
       if enemy.mods.v then
          enemy.mods.v = clamp(enemy.mods.v-1, 0, 100)
       end
    end
    add_to_action_queue(enum_actions.player_turn_start)
-   return true
-end
-
-function_map_actions[enum_actions.attack_player] = function (_frame, _args)
-   player.health.cur -= _args
-   return true
-end
-
-function_map_actions[enum_actions.enemy_block] = function (_frame, _args)
-   --game_state.combat.enemies[.health.cur -= _args
-   return true
-end
-
-function_map_actions[enum_actions.enemy_apply] = function (_frame, _args)
    return true
 end
 
