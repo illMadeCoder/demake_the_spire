@@ -2,7 +2,6 @@ pico-8 cartridge // http://www.pico-8.com
 version 18
 __lua__
 
-
 function new_list_cursor(_list)
    return {
       list = _list or {},
@@ -49,8 +48,8 @@ function get_selected(_list_cursor)
    return _list_cursor.cursor == 0 and nil or _list_cursor.list[_list_cursor.cursor]
 end
 
-function is_selected(_list_cursor, _item)
-   return get_selected(_list_cursor) == _item
+function is_selected(_list_cursor, _element)
+   return get_selected(_list_cursor) == _element
 end
 
 function is_empty(_list_cursor)

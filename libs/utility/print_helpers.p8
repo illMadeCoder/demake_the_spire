@@ -24,33 +24,8 @@ function_map_just[enum_just.left] = _print
 function_map_just[enum_just.center] = print_centered
 function_map_just[enum_just.right] = print_right_just
 
--- function print_cc(_cc_str, 
---                   _x, 
---                   _y, 
---                   _dc)
---    _cc_str = "" .. _cc_str .. ""
--- 	local c = nil
--- 	local state = 0
--- 	local print_length = 0
--- 	for i=1, #_cc_str do -- must be doing something infinite here
--- 		local char = sub(_cc_str, i, i)
--- 		if state == 2 and char == "$" then
--- 			c = nil
--- 			state = 0
--- 		elseif state == 1 then
--- 			c = char
--- 			state = 2
--- 		elseif state == 0 and char == "$" then
--- 		   state = 1		 
--- 		else
--- 			print(char, _x+print_length*4, _y, c or _dc)	
--- 			print_length += 1
--- 		end
--- 	end
--- end
-
 function _print(_str, _x, _y, _c, _is_selected, _underline)
-   local c =_is_selected == true and display_colors.player_color or _c
+   local c =_is_selected == true and 14 or _c
    print(_str, _x, _y, c)
 end
 
@@ -130,8 +105,8 @@ function print_left_just(_str, _x, _y, _c, _is_selected, _underline)
 end
 
 function print_energy(_x, _y, _energy)
-   _print(_energy, _x, _y, enum_colors.yellow)
-   _print(icons_map.energy, _x+#(_energy .. "")*4-1, _y, enum_colors.yellow)
+   _print(_energy, _x, _y, 10)
+   _print(icons_map.energy, _x+#(_energy .. "")*4-1, _y, 10)
 end
 
 function mods_str(_mods) 
@@ -160,17 +135,31 @@ end
 
 function print_health(_x, _y, _health_cur, _health_max)
    local str = _health_cur .. "/" .. _health_max
-   _print(str, _x, _y, enum_colors.red)
-   _print(icons_map.health, _x+#str*4-1, _y, enum_colors.red)
+   _print(str, _x, _y, 8)
+   _print(icons_map.health, _x+#str*4-1, _y, 8)
 end
 
 function print_block(_x, _y, _block)
    _block = fill_rest_str(tostr(_block), '0', 2, true)
-   _print(_block, _x, _y, enum_colors.grey)
-   _print(icons_map.block, _x+#(_block .. "")*4-1, _y, enum_colors.grey)
+   _print(_block, _x, _y, 6)
+   _print(icons_map.block, _x+#(_block .. "")*4-1, _y, 6)
 end
 
 function print_health_block(_health_cur, _health_max, _block, _x, _y, _c)
-   print_health(_x, _y, _health_cur, _health_max, _c or enum_colors.red)
-   print_block(_x+27, _y, _block, _c or enum_colors.grey)   
+   print_health(_x, _y, _health_cur, _health_max, _c or 8)
+   print_block(_x+27, _y, _block, _c or 6)   
+end
+
+function get_enemy_intent_str(_enemy)
+   assert(_enemy.get_intent(_enemy)) --debug
+   local r = ""
+   local intent = _enemy.get_intent(_enemy)
+   for k,v in pairs(intent) do      
+      local k_display_str = icons_map[k] or k 
+      if k == "damage" then
+         v += _enemy.mods.strength
+      end
+      r = r .. v .. k_display_str
+   end
+   return r
 end

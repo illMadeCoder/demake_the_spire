@@ -10,22 +10,18 @@ __lua__
 -- and certain design decisions we're made to optimize towards that limit
 
 -- any lines that end with --debug or sequence of lines that start with --debug_start to -- debug_end are designed to be removed for a release build
-#include libs/utilities.p8
-#include libs/print_helpers.p8
-#include libs/debug_helpers.p8
-#include libs/list_cursor.p8
-#include libs/enum_colors.p8
-#include libs/enum_buttons.p8
-#include libs/enum_game_turns.p8
-#include libs/game_state.p8
-#include libs/card.p8
-#include libs/mods.p8
-#include libs/action.p8
-#include libs/action_queue.p8
-#include libs/enemy.p8
-#include libs/graphics.p8
-#include libs/graphic_buffer.p8
-#include libs/backgrounds.p8
+#include libs/utility/utilities.p8
+#include libs/utility/print_helpers.p8
+#include libs/utility/debug_helpers.p8
+#include libs/utility/list_cursor.p8
+#include libs/utility/action_queue.p8
+#include libs/game/game_state.p8
+#include libs/game/card.p8 
+#include libs/game/action.p8
+#include libs/game/enemy.p8
+#include libs/graphics/graphics.p8
+#include libs/graphics/graphic_buffer.p8
+#include libs/graphics/backgrounds.p8
 
 debug_mode = true -- debug
 rnd_seed = rnd(100)
@@ -34,25 +30,9 @@ card_images = false
 -- 8. pico-8 hooks
 function _init()
    frame = 0
-
-   enemies.list = enemy_ids_to_enemies({enum_enemies.jaw_worm})
-
-   deck.list = card_ids_to_pile({
-      -- enum_cards.strike,
-   					   enum_cards.strike,
-   					   enum_cards.strike,
-   					   enum_cards.strike,
-   					   enum_cards.strike,
-                    enum_cards.anger,
-                    enum_cards.reaper,
-   					  enum_cards.bash,
-   					  enum_cards.defend,
-   					  enum_cards.defend,
-   					  enum_cards.defend
-					--   enum_cards.defend
-                 })
-
-   add_to_action_queue(enum_actions.combat_start)
+   enemies.list = enemy_ids_to_enemies({1})
+   deck.list = card_ids_to_pile({1,1,1,1,1})
+   add_to_action_queue(1)
 end
 
 function _update()

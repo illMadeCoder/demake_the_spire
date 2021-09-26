@@ -10,21 +10,21 @@ __lua__
 --   get_description :: this_card -> string,
 -- }
 -- but may include 'private' helper methods to be used by the public methods
-enum_card_types = {
-   attack = 1,
-   skill = 2,
-   power = 3,
-   status = 4
-}
+-- enum_card_types = {
+--    attack = 1,
+--    skill = 2,
+--    power = 3,
+--    status = 4
+-- }
 
--- 4.1 card typeobjects
-enum_cards = {
-   strike = 1,
-   defend = 2,
-   anger = 3,
-   bash = 4,
-   reaper = 5
-}
+-- 4.1 card type_objects
+-- enum_cards = {
+--    strike = 1,
+--    defend = 2,
+--    anger = 3,
+--    bash = 4,
+--    reaper = 5
+-- }
 
 function damage_str(_card) 
    return "deal " .. (_card.card_prototype.select_enemy and
@@ -40,13 +40,13 @@ function block_str(_card)
    return "gain " .. _card.card_prototype.block .. icons_map.block
 end
 
-card_typeobjects = {
+card_type_objects = {
    {
       "strike", -- 1 name
-      enum_card_types.attack, -- 2 type
+      1, -- 2 type
       1, -- 3 cost      
       function (_this) -- 4 invoke_action	      
-	      add_to_action_queue(enum_actions.attack_enemy, 
+	      add_to_action_queue(15, 
                            {damage=_this.card_prototype.damage})
       end,
       function (_this) -- 5 get_description
@@ -57,10 +57,10 @@ card_typeobjects = {
    },
    {
       "defend",
-      enum_card_types.skill,
+      2,
       1,
       function (_this)
-	      add_to_action_queue(enum_actions.block, _this.card_prototype.block)
+	      add_to_action_queue(18, _this.card_prototype.block)
       end,
       function (_this)
 	      return block_str(_this)
@@ -69,11 +69,11 @@ card_typeobjects = {
    },
    {
       "anger",
-      enum_card_types.attack,
+      1,
       0,
       function (_this)
-         add_to_action_queue(enum_actions.attack_enemy, {damage=_this.card_prototype.damage})
-         add_to_action_queue(enum_actions.add_to_discard_pile, new_card(enum_cards.anger))         
+         add_to_action_queue(15, {damage=_this.card_prototype.damage})
+         add_to_action_queue(14, new_card(enum_cards.anger))         
       end,
       function (_this)
 	      return {damage_str(_this), " adds a copy of this card into your discard pile"}
@@ -83,11 +83,11 @@ card_typeobjects = {
    },
    {
       "bash",
-      enum_card_types.attack,
+      1,
       2,
       function (_this)
-         add_to_action_queue(enum_actions.attack_enemy, {damage=_this.card_prototype.damage})
-         add_to_action_queue(enum_actions.apply_selected, _this.card_prototype.mods)
+         add_to_action_queue(15, {damage=_this.card_prototype.damage})
+         add_to_action_queue(17, _this.card_prototype.mods)
       end,
       function (_this)
 	      return damage_str(_this)
@@ -97,29 +97,27 @@ card_typeobjects = {
       mods = {v=2}
    },
    {
-   "reaper",
-   enum_card_types.attack,
-   2,
-   function (_this)         
-      for enemy in all(enemies.list) do
-         add_to_action_queue(enum_actions.attack_enemy, {enemy=enemy, damage=_this.card_prototype.damage})
-      end
-   end,
-   function (_this)
-      return (damage_str(_this) .. " to all enemies. heal hp equal to unblocked damage.")
-   end,      
-   damage = 4
-}
+      "reaper",
+      1,
+      2,
+      function (_this)         
+         for enemy in all(enemies.list) do
+            add_to_action_queue(15, {enemy=enemy, damage=_this.card_prototype.damage})
+         end
+      end,
+      function (_this)
+         return (damage_str(_this) .. " to all enemies. heal hp equal to unblocked damage.")
+      end,      
+      damage = 4
+   }
 }
 
 -- 4.2 card constructor
-latest_card_instance_id = 0
-function new_card(_card_id)
-   assert(card_typeobjects[_card_id]) --debug
-   
+latest_card_instance_id = 1
+function new_card(_card_id)   
    local card_instance =  {
       card_instance_id = latest_card_instance_id,
-      card_prototype = card_typeobjects[_card_id]
+      card_prototype = card_type_objects[_card_id]
    }
    latest_card_instance_id += 1
 

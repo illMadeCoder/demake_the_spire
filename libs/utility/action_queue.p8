@@ -5,7 +5,7 @@ __lua__
 -- The action_queue is an array of action objects to be executed in
 -- the order they were inserted (fifo)
 action_queue = {}
-action_queue_log = {} --debug
+-- action_queue_log = {} --debug
 
 function update_action_queue()
    local action = action_queue[1]
@@ -13,8 +13,8 @@ function update_action_queue()
       return
    else
       if function_map_actions[action.action_id](action.frame, action.args) then
-	 del(action_queue, action)
-	 log_action_queue("del", action.action_id) --debug
+	      del(action_queue, action)
+	    --log_action_queue("del", action.action_id) --debug
       end
       action.frame += 1
    end
@@ -31,7 +31,7 @@ function interrupt_action_queue(_action_id, _args)
 
    action_queue = new_action_queue
 
-   log_action_queue("int", _action_id) --debug
+   --log_action_queue("int", _action_id) --debug
 end
 
 function immediate_add_action_queue(_action_id, _args)
@@ -44,24 +44,24 @@ function immediate_add_action_queue(_action_id, _args)
    end
    
    action_queue = new_action_queue
-   log_action_queue("imm", _action_id) --debug
+   --log_action_queue("imm", _action_id) --debug
 end
 
 function add_to_action_queue(_action_id, _args)
    add(action_queue, new_action(_action_id, _args))
-   log_action_queue("add", _action_id)--debug
+   --log_action_queue("add", _action_id)--debug
 end
 
 function is_action_queue_currently(_action_id)
-   assert(is_in_enum(_action_id, enum_actions), _action_id) --debug
+   -- assert(is_in_enum(_action_id, enum_actions), _action_id) --debug
    return action_queue[1] and action_queue[1].action_id == _action_id
 end
 
 --debug_start
-function log_action_queue(_change, _action_id)
-   add(action_queue_log, _change .. ": " .. enum_key(_action_id, enum_actions))
-   for action in all(action_queue) do
-      add(action_queue_log, " " .. enum_key(action.action_id, enum_actions))
-   end
-end
+-- function log_action_queue(_change, _action_id)
+--    -- add(action_queue_log, _change .. ": " .. enum_key(_action_id, enum_actions))
+--    -- for action in all(action_queue) do
+--    --    add(action_queue_log, " " .. enum_key(action.action_id, enum_actions))
+--    -- end
+-- end
 --debug_end
