@@ -1,18 +1,7 @@
 pico-8 cartridge // http://www.pico-8.com
 version 18
 __lua__
--- 5. the action object
--- a list of actions who take the form
--- {
---   callback :: frame -> args -> bool,
---   frame :: integer,
---   args :: object
--- }
 
--- an action is this game_state's way of representing discrete behavior that
--- require x frames or some other condition to fully execute and occassionally
--- multiple ordered steps. The callback boolean's result of truth
--- indicate the end of an action's execution
 
 -- returns a damage, block tuple
 function damage_block_calc(_damage, _block)
@@ -49,7 +38,7 @@ end
 --     enemy_turn_start = 24
 -- }
 
-function_map_actions = {
+combat_action_callbacks = {
    -- 1 combat start
    function (_frame, _args)
       -- initialize deck
@@ -58,12 +47,7 @@ function_map_actions = {
    
       add_to_action_queue(2)
       -- delay draw sequence
-      add_to_action_queue(22, 18)
-      
-      add_to_graphic_buffer(1) -- background
-      add_to_graphic_buffer(2) -- combat_player_panel    
-      add_to_graphic_buffer(3) -- field
-      add_to_graphic_buffer(4) -- enemies   
+      add_to_action_queue(22, 18)   
      
       return true
    end,
@@ -77,6 +61,11 @@ function_map_actions = {
    end,
    -- 3 player turn end
    function (_frame, _args)
+      if _frame == 0 then         
+         set_cursor_none(combat_select)
+         set_cursor_to_element(field_view, hand)
+      end
+
       if _frame == 10 then
          add_to_action_queue(4)
          add_to_action_queue(19)
@@ -92,7 +81,7 @@ function_map_actions = {
    end,
    -- 5 full draw to hand
    function (_frame, _args)
-      for i=1, player.draw_power do
+      for i=1, 5 do
          add_to_action_queue(6)
       end   
       add_to_action_queue(22, 10)
@@ -110,7 +99,7 @@ function_map_actions = {
          set_cursor_end(hand)
       end
    
-      if _frame == 10 then
+      if _frame == 3 then -- change draw speed
          return true
       end
    end,
@@ -162,24 +151,26 @@ function_map_actions = {
          end
       end
       
-      if btnp(0) then
-         dec_cursor(get_selected(combat_select))
-      elseif btnp(1) then
-         inc_cursor(get_selected(combat_select))
+      if get_selected(combat_select) != player then
+         if btnp(0) then
+            dec_cursor(get_selected(combat_select))
+         elseif btnp(1) then
+            inc_cursor(get_selected(combat_select))         
+         end
       end
    
       if btnp(2) then
          inc_cursor(combat_select)
+         mod_display_frame = 0
       elseif btnp(3) then
          dec_cursor(combat_select)
+         mod_display_frame = 0
       end
-   
+         
       set_cursor_to_element(field_view, get_selected(combat_select))
       
       if btnp(5) then
-         set_cursor_to_element(field_view, hand)
          add_to_action_queue(3)
-         set_cursor_none(combat_select)
          return true
       end
    end,
@@ -237,7 +228,10 @@ function_map_actions = {
          local mod_damage = base_damage
          if enemy then
             --interrupt_action_queue(enum_actions.display_event)
-            if enemy.mods.v > 0 then
+            if player.mods.strength then
+               mod_damage = base_damage + player.mods.strength
+            end            
+            if enemy.mods.vulnerable then
                mod_damage = base_damage + flr(base_damage*.5)
             end
             local damage, block = damage_block_calc(mod_damage, enemy.block)
@@ -291,7 +285,7 @@ function_map_actions = {
       if _frame == 45 then
          set_cursor_to_element(combat_select, enemies)
          for enemy in all(enemies.list) do
-            --add_to_action_queue(24, enemy)
+            add_to_action_queue(24, enemy)
          end      
          for enemy in all(enemies.list) do
             add_to_action_queue(20, enemy)
@@ -302,6 +296,7 @@ function_map_actions = {
    end,
    -- 20 enemy_action
    function (_frame, _args)
+      set_cursor_to_element(enemies, _args)
       if _frame == 15 then
          local enemy = _args
          local intent = enemy.get_intent(enemy)
@@ -321,8 +316,13 @@ function_map_actions = {
          enemy.turn += 1     
          enemy.intent = nil
          enemy.get_intent(enemy)
-         if enemy.mods.v then
-            enemy.mods.v = clamp(enemy.mods.v-1, 0, 100)
+         if enemy.mods.vulnerable then
+            enemy.mods.vulnerable = clamp(enemy.mods.vulnerable-1, 0, 100)
+         end
+         for k,v in pairs(enemy.mods) do
+            if v == 0 then
+               enemy.mods[k] = nil
+            end
          end
       end
       add_to_action_queue(2)
@@ -341,19 +341,10 @@ function_map_actions = {
    end ,
    -- 24 enemy_turn start
    function (_frame, _args)
+      set_cursor_to_element(enemies, _args)
       _args.block = 0
-      return true
+      if _frame == 30 then
+         return true
+      end
    end
 }
-
--- 5.3 action constructor
-function new_action(_action_id, _args)
-   -- assert(is_num(_action_id)) --debug
-   -- assert(function_map_actions[_action_id] != nil) --debug
-
-   return {
-      action_id = _action_id,
-      args = _args,
-      frame = 0
-   }
-end

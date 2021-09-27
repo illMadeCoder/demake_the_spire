@@ -27,13 +27,17 @@ __lua__
 -- }
 
 function damage_str(_card) 
-   return "deal " .. (_card.card_prototype.select_enemy and
-                           enemies and 
-                           get_selected(enemies) 
-                           and 
-                           get_selected(enemies).mods.v > 0 
-                              and _card.card_prototype.damage + flr(_card.card_prototype.damage*.5) 
-                              or _card.card_prototype.damage) .. icons_map.damage
+   local modded_damage = _card.card_prototype.damage
+   if player.mods.strength then
+      modded_damage += player.mods.strength
+   end   
+   if _card.card_prototype.select_enemy and 
+      get_selected(enemies) and 
+      get_selected(enemies).mods.vulnerable 
+      then
+      modded_damage += flr(modded_damage*.5)
+   end
+   return "deal " .. modded_damage.. icons_map.damage
 end
 
 function block_str(_card) 

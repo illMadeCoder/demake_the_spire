@@ -6,14 +6,24 @@ __lua__
 -- the order they were inserted (fifo)
 action_queue = {}
 -- action_queue_log = {} --debug
+action_queue_subscribers = {}
+function subscribe_to_action_queue(_subscriber)
+   add(action_queue_subscribers, _subscriber)
+end
+function unsubscribe_to_action_queue(_subscriber) 
+   del(action_queue_subscribers, _subscriber)
+end
 
 function update_action_queue()
    local action = action_queue[1]
    if action == nil then
       return
    else
-      if function_map_actions[action.action_id](action.frame, action.args) then
+      if action.action_callback(action.frame, action.args) then
 	      del(action_queue, action)
+         for subscriber in all(action_queue_subscribers) do
+            subscriber.callback(subscriber, action_queue[1])
+         end 
 	    --log_action_queue("del", action.action_id) --debug
       end
       action.frame += 1

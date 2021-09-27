@@ -15,8 +15,7 @@ icons_map = {
    x_button = "\151",
    evil_eye = "\136",
    star = "\146",
-   damage = "\133",
-   strength = "s"
+   damage = "\133"
 }
 
 function_map_just = {}
@@ -109,13 +108,15 @@ function print_energy(_x, _y, _energy)
    _print(icons_map.energy, _x+#(_energy .. "")*4-1, _y, 10)
 end
 
+mods_shortened_map = {
+   vulnerable = "v",
+   strength = "s",
+}
+
 function mods_str(_mods) 
    local s = ''
    for k,v in pairs(_mods) do 
-      if v > 0 then
-         local display_str_k = icons_map[k] or k
-         s = s .. v .. display_str_k
-      end
+      s = s .. v .. mods_shortened_map[k]
    end
    return fill_rest_str(s,"~",10)
 end
@@ -155,11 +156,37 @@ function get_enemy_intent_str(_enemy)
    local r = ""
    local intent = _enemy.get_intent(_enemy)
    for k,v in pairs(intent) do      
-      local k_display_str = icons_map[k] or k 
-      if k == "damage" then
+      local k_display_str = icons_map[k] or mods_shortened_map[k] or k 
+      if k == "damage" and _enemy.mods.strength then
          v += _enemy.mods.strength
       end
       r = r .. v .. k_display_str
    end
    return r
 end
+
+mod_details_map = {
+   vulnerable = "vulnerable creatures take 50% more damage from attacks.",
+   strength = "each point of strengths gives +1" .. icons_map.damage .. " per hit."   
+}
+function print_mods_detailed(_mods, _x, _y)    
+   -- ugly code to work with mods as list instead of obj here
+   local mods_count = 0
+   for key,val in pairs(_mods) do
+      mods_count += 1
+   end      
+
+   local display_mod_index = (flr(mod_display_frame/100)%mods_count)+1
+   local i = 1
+
+   for key,val in pairs(_mods) do
+      if i == display_mod_index then
+         local strs = str_wrapped(mod_details_map[key], 14)
+         print_centered(key .. ":" .. val, _x, _y, 7)
+         for j,str in ipairs(strs) do
+            print_centered(str, _x, 2+_y+j*6, 7)
+         end         
+      end
+      i+=1
+   end   
+end  

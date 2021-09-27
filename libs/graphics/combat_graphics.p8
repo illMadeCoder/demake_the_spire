@@ -119,7 +119,11 @@ function field(_state)
    end
    
    if _state.frame >= 18 then
-      if _str == "enemies" then
+      if get_selected(field_view) == player then
+         rectfill(63-35, 40-2+1, 63+35, 40+45+1, 0)
+         rect(63-30, 40-2+1, 63+30, 40+40+1, 13)       
+         print_mods_detailed(player.mods, 63, 40+1)
+      elseif _str == "enemies" then
          focus_sides(_state.focus_sides_enemies)
       else
          focus_sides(_state.focus_sides_cards)
@@ -175,11 +179,11 @@ function combat_player_panel()
                is_selected(combat_select, potions) or
                is_selected(combat_select, relics)) and 14
 
-   panel(x-2, y-2, 42, 25, c)
+   panel(x-2, y-2, 42, 25, 1)
    print_energy(x, y, player.energy)
    _print("ironclad", x, y+6, 14)
    print_health_block(player.health.cur, player.health.max, player.block, x, y+12)
-   _print(mods_str({}), x, y+18, 13)
+   _print(mods_str(player.mods), x, y+18, 13)
 
    panel(53, 97, 72, 29,c)
    pile(63, 99, "draw", 9, draw)
@@ -265,9 +269,8 @@ graphic_type_objects = {
                   display_focus = function (_enemy,_x,_y)
                      -- border
                      rectfill(_x-35, _y-2, _x+35, _y+45, 0)
-                     rect(_x-30, _y-2, _x+30, _y+40, c)
-                     
-                     print_centered(_enemy.name, _x, _y, 2)
+                     rect(_x-30, _y-2, _x+30, _y+40, 13)                     
+                     print_mods_detailed(_enemy.mods, _x, _y)
                   end,
                   display_side_left = function (_enemy, _y, _i)
                   end,
@@ -313,3 +316,9 @@ function new_graphic(_graphic_id, _args)
    ret.state.frame = 0
    return ret
 end
+
+graphic_buffer = {}
+add_to_graphic_buffer(1) -- background
+add_to_graphic_buffer(2) -- combat_player_panel    
+add_to_graphic_buffer(3) -- field
+add_to_graphic_buffer(4) -- enemies 

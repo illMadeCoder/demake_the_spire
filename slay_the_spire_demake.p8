@@ -11,34 +11,41 @@ __lua__
 
 -- any lines that end with --debug or sequence of lines that start with --debug_start to -- debug_end are designed to be removed for a release build
 #include libs/utility/utilities.p8
-#include libs/utility/print_helpers.p8
-#include libs/utility/debug_helpers.p8
 #include libs/utility/list_cursor.p8
-#include libs/utility/action_queue.p8
-#include libs/game/game_state.p8
-#include libs/game/card.p8 
-#include libs/game/action.p8
-#include libs/game/enemy.p8
-#include libs/graphics/graphics.p8
+#include libs/game/universal/game.p8
+#include libs/game/universal/card.p8
+#include libs/game/universal/action.p8
+#include libs/game/universal/action_queue.p8
+#include libs/game/combat/combat_action.p8
+#include libs/game/combat/enemy.p8
+#include libs/game/combat/combat.p8
 #include libs/graphics/graphic_buffer.p8
 #include libs/graphics/backgrounds.p8
+#include libs/graphics/print_helpers.p8
+#include libs/graphics/combat_graphics.p8
+
+-- #include libs/tests/test.p8
+-- #include libs/tests/combat/combat.p8
+-- #include libs/tests/combat/cards.p8
 
 debug_mode = true -- debug
 rnd_seed = rnd(100)
-card_images = false
 
 -- 8. pico-8 hooks
 function _init()
    frame = 0
-   enemies.list = enemy_ids_to_enemies({1})
-   deck.list = card_ids_to_pile({1,1,1,1,1})
+   mod_display_frame = 0
+   init_game({1,1,1,1,1})
+   init_combat({1})
    add_to_action_queue(1)
 end
 
 function _update()
    update_action_queue()
    update_graphic_buffer()
+   --update_tests()
    frame += 1
+   mod_display_frame += 1
 end
 
 function _draw()

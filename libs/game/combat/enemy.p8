@@ -33,8 +33,7 @@ function new_enemy(_enemy_id, _index)
       block = _enemy_type_object.block or 0,
       turn = 1,
       get_intent = _enemy_type_object.get_intent,
-      mods = {v=0,
-              strength=0},
+      mods = {vulnerable=1, strength=2},
       index=_index
    }
 end
