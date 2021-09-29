@@ -14,7 +14,7 @@ enemy_type_objects = {
                if _this.turn == "player" or choice < .25 then
                   _this.intent = {damage=11} -- thrash
                elseif (_this.turn == "enemies" or choice < .7) and _this.turn != 3 then 
-                  _this.intent = {strength=3, block=6} --bellow
+                  _this.intent = {mods={new_mod(1, 3)}, block=6} --bellow
                else
                    _this.intent = {damage=7, block=5} -- thrash
                end
@@ -33,7 +33,7 @@ function new_enemy(_enemy_id, _index)
       block = _enemy_type_object.block or 0,
       turn = 1,
       get_intent = _enemy_type_object.get_intent,
-      mods = {vulnerable=1, strength=2},
+      mods = {new_mod(1), new_mod(2)},
       index=_index
    }
 end

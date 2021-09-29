@@ -19,10 +19,10 @@ __lua__
 #include libs/game/combat/combat_action.p8
 #include libs/game/combat/enemy.p8
 #include libs/game/combat/combat.p8
-#include libs/graphics/graphic_buffer.p8
 #include libs/graphics/backgrounds.p8
 #include libs/graphics/print_helpers.p8
 #include libs/graphics/combat_graphics.p8
+#include libs/game/combat/mod.p8
 
 -- #include libs/tests/test.p8
 -- #include libs/tests/combat/combat.p8
@@ -35,22 +35,20 @@ rnd_seed = rnd(100)
 function _init()
    frame = 0
    mod_display_frame = 0
-   init_game({1,1,1,1,1})
-   init_combat({1})
-   add_to_action_queue(1)
+   init_game({1,2,2,1,1,2,2,2})
+   init_combat({1,1})
 end
 
 function _update()
-   update_action_queue()
-   update_graphic_buffer()
-   --update_tests()
+   update_action_queue()   
+   update_combat()   
    frame += 1
    mod_display_frame += 1
 end
 
 function _draw()
-   cls()
-   draw_graphic_buffer()
+   cls()   
+   draw_combat()
 end
 
 __gfx__

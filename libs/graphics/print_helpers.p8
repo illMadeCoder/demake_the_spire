@@ -23,13 +23,87 @@ function_map_just[enum_just.left] = _print
 function_map_just[enum_just.center] = print_centered
 function_map_just[enum_just.right] = print_right_just
 
+-- todo refactor
+function cc_len(_str) 
+   local j = 0
+   local temp_color_state = 0
+   local temp_color = ""
+   for i=1, #tostr(_str) do
+      local char = sub(_str, i, i)
+      if char == "{" then
+         temp_color_state = 1
+      elseif temp_color_state == 1 and char !=  " " then
+         temp_color = temp_color .. char
+      elseif temp_color_state == 1 and char == " " then
+         temp_color_state = 2   
+      elseif char == "|" then    
+      elseif temp_color_state == 2 and char == "}" then
+         temp_color_state = 0
+         temp_color = ""
+      else
+         j += 1
+      end   
+   end
+   return j
+end   
+
+function cc_w(_str) 
+   local j = 0
+   local temp_color_state = 0
+   local temp_color = ""
+   for i=1, #tostr(_str) do
+      local char = sub(_str, i, i)
+      if char == "{" then
+         temp_color_state = 1
+      elseif temp_color_state == 1 and char !=  " " then
+         temp_color = temp_color .. char
+      elseif temp_color_state == 1 and char == " " then
+         temp_color_state = 2   
+      elseif char == "|" then
+         j += 2         
+      elseif temp_color_state == 2 and char == "}" then
+         temp_color_state = 0
+         temp_color = ""
+      else
+         j += 4
+      end   
+   end
+   return j
+end   
+
+
 function _print(_str, _x, _y, _c, _is_selected, _underline)
+   _x = _x or 0
+   _y = _y or 0
    local c =_is_selected == true and 14 or _c
-   print(_str, _x, _y, c)
+   local char_x = 0
+   local temp_color = ""
+   local temp_color_state = 0
+   for i=1, #tostr(_str) do
+      local char = sub(_str, i, i)
+      if char == "{" then
+         temp_color_state = 1
+      elseif temp_color_state == 1 and char !=  " " then
+         temp_color = temp_color .. char
+      elseif temp_color_state == 1 and char == " " then
+         temp_color_state = 2   
+      elseif temp_color_state == 2 and char == "}" then
+         temp_color_state = 0
+         temp_color = ""
+      elseif char == "|" then
+         char_x += 1
+      else
+         local x_mod = (char == "\133" or char == "\143") and -1 or (char == "\142" or char == "151") and -4 or 0
+         print(char, _x+(i>1 and char_x+x_mod or 0), _y, (#temp_color > 0 and temp_color) or c)
+         char_x += ((char == "\133" or char == "\143") and 6 or ((char == "\142" or char == "\151") and 8) or 4)
+         prev_char = char
+      end   
+   end
+   --print(_str, _x, _y, _c)
 end
 
 function print_centered(_str, _x, _y, _c, _is_selected, _underline)
-   _print(_str, _x - #_str*2, _y, _c, _is_selected, _underline)
+   _print(_str, _x - cc_w(_str)/2, _y, _c, _is_selected, _underline)
 end
 
 function split(_str, _split) 
@@ -96,7 +170,7 @@ function print_card_description(_card, _x, _y, _c)
 end
 
 function print_right_just(_str, _x, _y, _c, _is_selected, _underline)
-   _print(_str, _x - #_str*4, _y, _c, _is_selected, _underline)
+   _print(_str, _x - cc_w(_str), _y, _c, _is_selected, _underline)
 end
 
 function print_left_just(_str, _x, _y, _c, _is_selected, _underline)
@@ -108,19 +182,6 @@ function print_energy(_x, _y, _energy)
    _print(icons_map.energy, _x+#(_energy .. "")*4-1, _y, 10)
 end
 
-mods_shortened_map = {
-   vulnerable = "v",
-   strength = "s",
-}
-
-function mods_str(_mods) 
-   local s = ''
-   for k,v in pairs(_mods) do 
-      s = s .. v .. mods_shortened_map[k]
-   end
-   return fill_rest_str(s,"~",10)
-end
-
 function repeat_char(_char, _c)
    local r = ''
    for i = 1, _c do
@@ -130,7 +191,7 @@ function repeat_char(_char, _c)
 end
 
 function fill_rest_str(_str, _char, _count, _fill_left)
-   local repeated_chars = repeat_char(_char, _count-#_str)
+   local repeated_chars = repeat_char(_char, _count-cc_len(_str))
    return _fill_left and repeated_chars .. _str or _str .. repeated_chars 
 end
 
@@ -148,7 +209,7 @@ end
 
 function print_health_block(_health_cur, _health_max, _block, _x, _y, _c)
    print_health(_x, _y, _health_cur, _health_max, _c or 8)
-   print_block(_x+27, _y, _block, _c or 6)   
+   print_block(_x+26, _y, _block, _c or 6)   
 end
 
 function get_enemy_intent_str(_enemy)
@@ -156,37 +217,23 @@ function get_enemy_intent_str(_enemy)
    local r = ""
    local intent = _enemy.get_intent(_enemy)
    for k,v in pairs(intent) do      
-      local k_display_str = icons_map[k] or mods_shortened_map[k] or k 
-      if k == "damage" and _enemy.mods.strength then
-         v += _enemy.mods.strength
-      end
-      r = r .. v .. k_display_str
+      local k_display_str = icons_map[k] or k 
+      if k == "damage" then
+         --v += _enemy.mods.strength or 0      
+         c = 9
+         r = r .. "{" .. c .. " " .. v .. k_display_str .. "}"
+      elseif k == "block" then         
+         c = 6
+         r = r .. "{" .. c .. " " .. v .. k_display_str .. "}"
+      elseif k == "mods" then
+         for mod in all(v) do
+            r = r .. "{" .. 13 .. " " .. mod.degree .. mod.name_short .. "}"
+         end
+      end      
    end
    return r
 end
 
-mod_details_map = {
-   vulnerable = "vulnerable creatures take 50% more damage from attacks.",
-   strength = "each point of strengths gives +1" .. icons_map.damage .. " per hit."   
-}
-function print_mods_detailed(_mods, _x, _y)    
-   -- ugly code to work with mods as list instead of obj here
-   local mods_count = 0
-   for key,val in pairs(_mods) do
-      mods_count += 1
-   end      
-
-   local display_mod_index = (flr(mod_display_frame/100)%mods_count)+1
-   local i = 1
-
-   for key,val in pairs(_mods) do
-      if i == display_mod_index then
-         local strs = str_wrapped(mod_details_map[key], 14)
-         print_centered(key .. ":" .. val, _x, _y, 7)
-         for j,str in ipairs(strs) do
-            print_centered(str, _x, 2+_y+j*6, 7)
-         end         
-      end
-      i+=1
-   end   
-end  
+function str_shorten(_str, _char_length)
+   return sub(_str, 0, _char_length)
+end

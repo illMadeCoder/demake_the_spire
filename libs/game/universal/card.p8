@@ -28,20 +28,19 @@ __lua__
 
 function damage_str(_card) 
    local modded_damage = _card.card_prototype.damage
-   if player.mods.strength then
-      modded_damage += player.mods.strength
-   end   
+   -- if player.mods.strength then
+   --    modded_damage += player.mods.strength
+   -- end   
    if _card.card_prototype.select_enemy and 
       get_selected(enemies) and 
       get_selected(enemies).mods.vulnerable 
-      then
-      modded_damage += flr(modded_damage*.5)
+      then modded_damage += flr(modded_damage*.5)
    end
-   return "deal " .. modded_damage.. icons_map.damage
+   return "deal {9 " .. modded_damage .. icons_map.damage
 end
 
 function block_str(_card) 
-   return "gain " .. _card.card_prototype.block .. icons_map.block
+   return "gain {6 " .. _card.card_prototype.block .. icons_map.block
 end
 
 card_type_objects = {

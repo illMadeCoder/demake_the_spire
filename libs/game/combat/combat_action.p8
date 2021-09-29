@@ -55,7 +55,7 @@ combat_action_callbacks = {
    function (_frame, _args)
       set_cursor_to_element(field_view, hand)
       turn = "player"
-      player.energy = player.energy_init   
+      combat_player.energy = 3  
       add_to_action_queue(5)
       return true
    end,
@@ -161,11 +161,25 @@ combat_action_callbacks = {
    
       if btnp(2) then
          inc_cursor(combat_select)
+         enemy_mods_list_cursor.list = get_selected(enemies).mods
+         set_cursor_mid(enemy_mods_list_cursor)
+         set_cursor_mid(player_mods_list_cursor)
+         
+         if get_selected(combat_select) == enemy_mods_list_cursor and #enemy_mods_list_cursor.list <= 1 then
+            inc_cursor(combat_select)
+         end
          mod_display_frame = 0
       elseif btnp(3) then
          dec_cursor(combat_select)
+         set_cursor_mid(enemy_mods_list_cursor)
+         set_cursor_mid(player_mods_list_cursor)
+         if get_selected(combat_select) == enemy_mods_list_cursor and #enemy_mods_list_cursor.list <= 1 then
+            dec_cursor(combat_select)
+         end
          mod_display_frame = 0
       end
+
+
          
       set_cursor_to_element(field_view, get_selected(combat_select))
       
@@ -228,9 +242,9 @@ combat_action_callbacks = {
          local mod_damage = base_damage
          if enemy then
             --interrupt_action_queue(enum_actions.display_event)
-            if player.mods.strength then
-               mod_damage = base_damage + player.mods.strength
-            end            
+            -- if player.mods.strength then
+            --    mod_damage = base_damage + player.mods.strength
+            -- end            
             if enemy.mods.vulnerable then
                mod_damage = base_damage + flr(base_damage*.5)
             end
@@ -336,7 +350,7 @@ combat_action_callbacks = {
    end,
    -- 23 spend energy
    function (_frame, _args) 
-      player.energy -= _args
+      combat_player.energy -= _args
       return true
    end ,
    -- 24 enemy_turn start

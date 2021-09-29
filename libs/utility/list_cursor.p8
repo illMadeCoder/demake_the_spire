@@ -14,7 +14,9 @@ function set_cursor_none(_list_cursor)
 end
 
 function set_cursor_mid(_list_cursor)
-   _list_cursor.cursor = flr(#_list_cursor.list/2)+1
+   _list_cursor.cursor = #_list_cursor.list == 0 and 0 
+                        or #_list_cursor.list == 1 and 1 
+                        or flr(#_list_cursor.list/2)+1
 end
 
 function set_cursor_end(_list_cursor)
