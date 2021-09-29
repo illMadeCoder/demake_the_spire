@@ -227,7 +227,7 @@ function get_enemy_intent_str(_enemy)
          r = r .. "{" .. c .. " " .. v .. k_display_str .. "}"
       elseif k == "mods" then
          for mod in all(v) do
-            r = r .. "{" .. 13 .. " " .. mod.degree .. mod.name_short .. "}"
+            r = r .. "{" .. mod.color .. " " .. mod.degree .. mod.name_short .. "}"
          end
       end      
    end
