@@ -22,11 +22,12 @@ end
 
 function get_card_color(_card)
    local is_selected_card_from_hand = is_selected(hand, _card)
-   return (is_selected_card_from_hand and is_action_queue_currently(13)) and 4 or
-      (is_selected_card_from_hand and is_action_queue_currently(6)) and 9 or
-      (not can_play_card(_card) and 5) or 
-      (is_selected_card_from_hand and 14) or
-      7
+   return card_type_color_map[get_card_type(_card)]
+   -- (is_selected_card_from_hand and is_action_queue_currently(13)) and 4 or
+   --    (is_selected_card_from_hand and is_action_queue_currently(6)) and 9 or
+   --    (not can_play_card(_card) and 5) or 
+   --    (is_selected_card_from_hand and 14) or
+   --    7
 end
 
 function get_field_text_and_c()
@@ -188,19 +189,19 @@ function draw_combat()
                         local c = get_field_text_and_c()[2]
                         rectfill(63-35, 40-2+1, 63+35, 40+45+1, 0)
                         rect(63-30, 40-2+1, 63+30, 40+40+1,  (get_selected(field_view) == enemy_mods_list_cursor or get_selected(field_view) == player_mods_list_cursor) and 14 or 2)
-                        print_mod_description(_mod, 63, 40+1, (get_selected(field_view) == enemy_mods_list_cursor or get_selected(field_view) == player_mods_list_cursor) and 14 or 2)
+                        print_mod_description(_mod, 63, 40+1, _mod.color)
                      end,
                      function (_mod, _y, _i)
                         _print(_mod.degree .. "|" .. str_shorten(_mod.name, 6),
                                  0,
                                  _y-3+(_i-1)*6,
-                                 13)
+                                 _mod.color)
                      end,
                      function (_mod, _y, _i)
                         print_right_just(_mod.degree .. "|" .. str_shorten(_mod.name, 6),
                            130,
                            _y-3+(_i-1)*6,
-                           13)                    
+                           _mod.color)                    
                      end)
 
       else
@@ -222,13 +223,13 @@ function draw_combat()
                print_centered(get_card_name(_card),
                               _x,
                               _y,
-                              14)
+                              get_card_color(_card))
 
                -- description
                print_card_description(_card,
                                  _x,
                                  _y+8,
-                                 14)               
+                                 get_card_color(_card))       
             end,
             function (_card, _y, _i)
                _print("{10 " .. get_card_cost(_card) .. "}|" .. get_card_name(_card),

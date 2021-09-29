@@ -4,13 +4,15 @@ __lua__
 mod_type_objects = {
     {
         "vulnerable",
-        "v",
-        "vulnerable creatures take 50% more damage from attacks."
+        "v",        
+        "vulnerable creatures take 50% more damage from attacks.",
+        5
     },
     {
         "strength",
         "s",
-        "each point of strengths gives +1" .. icons_map.damage .. " per hit." 
+        "each point of strengths gives {9 +1" .. icons_map.damage .. " per hit.",
+        9
     }
 }
 
@@ -25,11 +27,12 @@ function print_mod_description(_mod, _x, _y, _c)
 function mods_str(_mods) 
     local s = ''
     for mod in all(_mods) do 
-        local is_selected = get_selected(combat_select) == enemy_mods_list_cursor and get_selected(enemy_mods_list_cursor).mod_id == mod.mod_id
+        local is_selected = (get_selected(combat_select) == enemy_mods_list_cursor and get_selected(enemy_mods_list_cursor).mod_id == mod.mod_id)
+                        or (get_selected(combat_select) == player_mods_list_cursor and get_selected(player_mods_list_cursor).mod_id == mod.mod_id)
         if is_selected then
             s = s .. "{14 " .. mod.degree .. mod.name_short .. "}"
         else
-            s = s .. mod.degree .. mod.name_short
+            s = s .. "{" .. mod.color .. " " .. mod.degree .. mod.name_short .. "}"
         end
     end
     return fill_rest_str(s,"~",10)
@@ -42,6 +45,7 @@ function new_mod(_mod_id, _degree)
         name = mod_type_object[1],
         name_short = mod_type_object[2],
         description = mod_type_object[3],
+        color = mod_type_object[4],
         degree = _degree or 1
     }
 end

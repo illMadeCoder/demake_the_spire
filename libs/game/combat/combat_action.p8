@@ -164,10 +164,7 @@ combat_action_callbacks = {
          enemy_mods_list_cursor.list = get_selected(enemies).mods
          set_cursor_mid(enemy_mods_list_cursor)
          set_cursor_mid(player_mods_list_cursor)
-         
-         if get_selected(combat_select) == enemy_mods_list_cursor and #enemy_mods_list_cursor.list <= 1 then
-            inc_cursor(combat_select)
-         end
+
          mod_display_frame = 0
       elseif btnp(3) then
          dec_cursor(combat_select)
@@ -290,7 +287,7 @@ combat_action_callbacks = {
    end,
    -- 18 block
    function (_frame, _args)
-      player.block += 5
+      combat_player.block += 5
       return true
    end,
    -- 19 enemies_turn_start

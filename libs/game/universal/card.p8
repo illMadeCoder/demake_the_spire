@@ -14,8 +14,17 @@ __lua__
 --    attack = 1,
 --    skill = 2,
 --    power = 3,
---    status = 4
+--    status = 4,
+--    curse = 5
 -- }
+
+card_type_color_map = {
+   8,
+   7,
+   12,
+   4,
+   5
+}
 
 -- 4.1 card type_objects
 -- enum_cards = {
